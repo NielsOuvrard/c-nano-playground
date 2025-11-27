@@ -1,0 +1,55 @@
+/bootloaders/optiboot/optiboot_atmega328.hex:i -Ulock:w:0x0F:m -Uhfuse:w:0xDE:m -Ulfuse:w:0xFF:m
+Avrdude version 8.1
+Copyright see https://github.com/avrdudes/avrdude/blob/main/AUTHORS
+
+System wide configuration file is /opt/homebrew/etc/avrdude.conf
+User configuration file /Users/nielsouvrard/.avrduderc does not exist
+
+Using port            : /dev/cu.usbserial-10
+Using programmer      : stk500v1
+Setting baud rate     : 19200
+Error: programmer is not responding
+Warning: attempt 1 of 10: not in sync: resp=0x00
+AVR part              : ATmega328P
+Programming modes     : SPM, ISP, HVPP, debugWIRE
+Programmer type       : STK500
+Description           : Atmel STK500 v1
+HW Version            : 2
+FW Version            : 1.18
+Topcard               : Unknown
+Vtarget               : 0.0 V
+Varef                 : 0.0 V
+Oscillator            : Off
+SCK period            : 0.0 us
+XTAL frequency        : 7.372800 MHz
+
+AVR device initialized and ready to accept instructions
+Device signature = 1E 95 0F (ATmega328P, ATA6614Q, LGT8F328P)
+Auto-erasing chip as flash memory needs programming (-U flash:w:...)
+specify the -D option to disable this feature
+Erased chip
+
+Processing -U flash:w:/Users/nielsouvrard/Downloads/Optiboot-8.0/bootloaders/optiboot/optiboot_atmega328.hex:i
+Reading 478 bytes for flash from input file optiboot_atmega328.hex
+in 2 sections of [0x7e00, 0x7fff]: 4 pages and 34 pad bytes
+Writing 478 bytes to flash
+Writing | ################################################## | 100% 0.67 s 
+Reading | ################################################## | 100% 0.31 s 
+478 bytes of flash verified
+
+Processing -U lock:w:0x0F:m
+Reading 1 byte for lock from input file 0x0F
+in 1 section [0, 0]
+Writing 1 byte (0x0F) to lock, 1 byte written, 1 verified
+
+Processing -U hfuse:w:0xDE:m
+Reading 1 byte for hfuse from input file 0xDE
+in 1 section [0, 0]
+Writing 1 byte (0xDE) to hfuse, 1 byte written, 1 verified
+
+Processing -U lfuse:w:0xFF:m
+Reading 1 byte for lfuse from input file 0xFF
+in 1 section [0, 0]
+Writing 1 byte (0xFF) to lfuse, 1 byte written, 1 verified
+
+Avrdude done.  Thank you.

@@ -4,6 +4,11 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/boot.h>
+#include <string.h>
+
+void print_signature(uint8_t sig[]);
+
 
 void uart_init(unsigned int ubrr)
 {
@@ -34,9 +39,29 @@ void uart_print(const char* str)
 int main(void)
 {
     uart_init(MYUBRR);
+    
+    uint8_t sig[3];
+    print_signature(sig);
+
+    char buffer[256];
+    strcpy(buffer, "Device Signature: ");
+    strcat(buffer, "");
+
+    for (int i = 0; i < 3; i++) {
+        char hex[3];
+        uint8_t val = sig[i];
+        hex[0] = "0123456789ABCDEF"[val >> 4];
+        hex[1] = "0123456789ABCDEF"[val & 0xF];
+        hex[2] = 0;
+        strcat(buffer, hex);
+        if (i < 2) {
+            strcat(buffer, " ");
+        }
+    }
 
     while (1) {
-        uart_print("hello world\r\n");
+        uart_print(buffer);
+        uart_print("\r\n");
         _delay_ms(1000);
     }
 

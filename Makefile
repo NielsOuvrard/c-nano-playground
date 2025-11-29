@@ -5,7 +5,7 @@ F_CPU = 16000000UL
 # Programmer settings
 PROGRAMMER = arduino
 PORT = /dev/cu.usbserial-110
-BAUD = 57600
+BAUD = 115200
 
 # Compiler settings
 CC = avr-gcc
@@ -14,7 +14,7 @@ AVRDUDE = avrdude
 CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os
 
 # Project files
-SRC = src/main.c
+SRC = src/*.c
 TARGET = hello
 
 all: $(TARGET).hex

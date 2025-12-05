@@ -110,24 +110,17 @@ int uprintf(const char* format, ...)
                 // Character
                 buffer[buf_idx++] = (char)va_arg(args, int);
             } else if (*p == 'p') {
-                // Pointer
+                // Pointer - format as 0x000000 (6 hex digits with leading zeros)
                 void* ptr = va_arg(args, void*);
-                unsigned long val = (unsigned long)ptr;
+                unsigned int val = (unsigned int)ptr;
                 buffer[buf_idx++] = '0';
                 buffer[buf_idx++] = 'x';
                 
-                char temp[9];
-                int temp_idx = 0;
-                if (val == 0) {
-                    temp[temp_idx++] = '0';
-                } else {
-                    while (val > 0) {
-                        temp[temp_idx++] = "0123456789abcdef"[val & 0xF];
-                        val >>= 4;
-                    }
-                }
-                while (temp_idx > 0 && buf_idx < 127) {
-                    buffer[buf_idx++] = temp[--temp_idx];
+                // Print 6 hex digits with leading zeros (for 16-bit addresses)
+                for (int i = 5; i >= 0; i--) {
+                    unsigned int nibble = (val >> (i * 4)) & 0xF;
+                    buffer[buf_idx++] = "0123456789abcdef"[nibble];
+                    if (buf_idx >= 127) break;
                 }
             } else if (*p == '%') {
                 // Literal %

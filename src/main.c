@@ -40,16 +40,12 @@ void fill_buffers()
     }
 }
 
-// ---
-// Device Signature: 2X 2X 2X
-// pointers: a= b= c=
-// Buffer random values: buf128[10]=10 buf256[200]=72 buf640[500]=116
-// ---
+int a; // stack
+int b = 1; // .data
+int c = 0; // .bss
+
 int main(void)
 {
-    int a;
-    int b = 1;
-    int c = 0;
     uart_init(MYUBRR);
     
     uint8_t sig[3];

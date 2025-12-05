@@ -81,7 +81,7 @@ This is **hardcore** - you modify how the compiler places everything.
 
 ### Step 1: Extract default linker script
 ```bash
-avr-gcc -mmcu=atmega328p -Wl,--verbose 2>&1 | grep "using internal linker script" -A 100 > atmega328p.ld
+cp /opt/homebrew/Cellar/avr-binutils/2.45.1/avr/lib/ldscripts/avr5.xn atmega328p.ld
 ```
 
 ### Step 2: Modify SRAM sections

@@ -20,19 +20,19 @@ AVRDUDE = avrdude
 # Compiler flags
 CFLAGS = -mmcu=$(MCU) \
          -DF_CPU=$(F_CPU) \
-         -Os \
+         -O0 \
          -Wall \
          -Wextra \
          -std=gnu99
 
 # Linker flags
 LDFLAGS = -mmcu=$(MCU) \
-          -T custom.ld \
+          -T minimum.ld \
           -Wl,-Map=$(PROJECT).map,--cref \
           -Wl,--gc-sections
 
 # Source files
-SRC = main.c
+SRC = *.c
 
 # Object files
 OBJ = $(SRC:.c=.o)
@@ -59,7 +59,7 @@ all: $(HEX) size
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Link object files to ELF
-$(ELF): $(OBJ) custom.ld
+$(ELF): $(OBJ) minimum.ld
 	@echo "Linking $(ELF)..."
 	$(CC) $(LDFLAGS) -o $@ $(OBJ)
 	@echo "Build complete!"
@@ -110,8 +110,8 @@ analyze: $(ELF) $(LST)
 
 # Show disassembly
 disasm: $(ELF)
-	@echo "Disassembly (first 100 lines):"
-	$(OBJDUMP) -d $< | head -100
+	@echo "Disassembly into diasm.txt..."
+	$(OBJDUMP) -d $< > diasm.txt
 
 # Show detailed memory map from map file
 memory: $(ELF)
@@ -172,11 +172,11 @@ hex: $(HEX)
 
 # Flash program to chip (adjust programmer settings)
 flash: $(HEX)
-	$(AVRDUDE) -p $(MCU) -c arduino -P /dev/ttyUSB0 -b 115200 -U flash:w:$<:i
+	$(AVRDUDE) -p $(MCU) -c arduino -P /dev/cu.usbserial-110 -b 115200 -U flash:w:$<:i
 
 # Set fuses for new bootloader
 fuses:
-	$(AVRDUDE) -p $(MCU) -c arduino -P /dev/ttyUSB0 -b 115200 \
+	$(AVRDUDE) -p $(MCU) -c arduino -P /dev/cu.usbserial-110 -b 115200 \
 		-U lfuse:w:0xFF:m \
 		-U hfuse:w:0xDE:m \
 		-U efuse:w:0xFD:m

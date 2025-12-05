@@ -5,3 +5,7 @@
 .vscode/*
 
 build/*
+*.o
+*.bin
+
+old/*

@@ -1,10 +1,10 @@
 # Your ATmega328P Memory Architecture
 
-Let me break down everything about memory on your Arduino Nano (ATmega328P with old bootloader):
+Let me break down everything about memory on your Arduino Nano (ATmega328P with 0.5KB bootloader):
 
 ## Flash Memory (Program Storage) - 32KB
 - **Type**: NOR Flash (not NAND)
-- **Size**: 32KB total, ~30.5KB available (old bootloader uses ~2KB)
+- **Size**: 32KB total, ~31.5KB available (after bootloader, 0.5KB used)
 - **Purpose**: Stores your compiled program
 - **Persistence**: Yes, survives power loss
 - **Write cycles**: ~10,000 cycles

@@ -11,7 +11,8 @@ BAUD = 115200
 CC = avr-gcc
 OBJCOPY = avr-objcopy
 AVRDUDE = avrdude
-CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os
+CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -O0
+LDFLAGS = -T minimum.ld
 
 # Project files
 SRC = src/*.c
@@ -20,7 +21,7 @@ TARGET = hello
 all: $(TARGET).hex
 
 $(TARGET).elf: $(SRC)
-	$(CC) $(CFLAGS) -o $(TARGET).elf $(SRC)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET).elf $(SRC)
 
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex $(TARGET).elf $(TARGET).hex

@@ -6,62 +6,69 @@
 #include <util/delay.h>
 #include <avr/boot.h>
 #include <string.h>
+#include "uart_com.h"
+
+// void malloc(void) __attribute__((error("malloc is forbidden on this platform")));
+// void free(void) __attribute__((error("free is forbidden on this platform")));
+// void realloc(void) __attribute__((error("realloc is forbidden on this platform")));
+// void calloc(void) __attribute__((error("calloc is forbidden on this platform")));
 
 void print_signature(uint8_t sig[]);
 
 
-void uart_init(unsigned int ubrr)
-{
-    // Set baud rate
-    UBRR0H = (unsigned char)(ubrr>>8);
-    UBRR0L = (unsigned char)ubrr;
-    // Enable transmitter
-    UCSR0B = (1<<TXEN0);
-    // Set frame format: 8 data bits, 1 stop bit
-    UCSR0C = (1<<UCSZ01) | (1<<UCSZ00);
-}
+// Define buffers directly with section attributes
+#ifdef BUFFER_SECTION_ATTRIBUTE
+uint8_t buffer_128[128] __attribute__((section(".buffer_128")));
+uint8_t buffer_256[256] __attribute__((section(".buffer_256")));
+uint8_t buffer_640[640] __attribute__((section(".buffer_640")));
+#else
+uint8_t buffer_128[128];
+uint8_t buffer_256[256];
+uint8_t buffer_640[640];
+#endif
 
-void uart_transmit(unsigned char data)
+void fill_buffers()
 {
-    // Wait for empty transmit buffer
-    while (!(UCSR0A & (1<<UDRE0)));
-    // Put data into buffer, sends the data
-    UDR0 = data;
-}
-
-void uart_print(const char* str)
-{
-    while (*str) {
-        uart_transmit(*str++);
+    for (int i = 0; i < 128; i++) {
+        buffer_128[i] = (uint8_t)i;
+    }
+    for (int i = 0; i < 256; i++) {
+        buffer_256[i] = (uint8_t)(i + 128);
+    }
+    for (int i = 0; i < 640; i++) {
+        buffer_640[i] = (uint8_t)(i + 384);
     }
 }
 
+// ---
+// Device Signature: 2X 2X 2X
+// pointers: a= b= c=
+// Buffer random values: buf128[10]=10 buf256[200]=72 buf640[500]=116
+// ---
 int main(void)
 {
+    int a;
+    int b = 1;
+    int c = 0;
     uart_init(MYUBRR);
     
     uint8_t sig[3];
     print_signature(sig);
 
-    char buffer[256];
-    strcpy(buffer, "Device Signature: ");
-    strcat(buffer, "");
+    fill_buffers();
 
-    for (int i = 0; i < 3; i++) {
-        char hex[3];
-        uint8_t val = sig[i];
-        hex[0] = "0123456789ABCDEF"[val >> 4];
-        hex[1] = "0123456789ABCDEF"[val & 0xF];
-        hex[2] = 0;
-        strcat(buffer, hex);
-        if (i < 2) {
-            strcat(buffer, " ");
-        }
-    }
+    uart_print("Starting main loop...\r\n");
 
     while (1) {
-        uart_print(buffer);
-        uart_print("\r\n");
+        uprintf("Device Signature: %X %X %X\r\n", sig[0], sig[1], sig[2]);
+        uprintf("pointers:\r\n");
+        uprintf("- a=%p\r\n- b=%p\r\n- c=%p\r\n",
+            (void*)&a, (void*)&b, (void*)&c);
+        uprintf("pointers buffers:\r\n");
+        uprintf("- buffer_128=%p\r\n- buffer_256=%p\r\n- buffer_640=%p\r\n",
+                (void*)buffer_128, (void*)buffer_256, (void*)buffer_640);
+        uprintf("Buffer random values: buf128[10]=%u buf256[200]=%u buf640[500]=%u\r\n",
+                buffer_128[10], buffer_256[200], buffer_640[500]);
         _delay_ms(1000);
     }
 

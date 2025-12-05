@@ -12,7 +12,7 @@ CC = avr-gcc
 OBJCOPY = avr-objcopy
 AVRDUDE = avrdude
 CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -O0
-LDFLAGS = -T minimum.ld
+LDFLAGS = -T minimum.ld -Tdata=0x800500 -DBUFFER_SECTION_ATTRIBUTE
 
 # Project files
 SRC = src/*.c

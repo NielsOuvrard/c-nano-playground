@@ -9,6 +9,7 @@ When you need **absolute control** over where your data lives in memory on the A
 ### Understanding ATmega328P SRAM Layout
 
 The **SRAM is 2KB (0x0800 bytes)** and lives at addresses:
+
 - **Start**: `0x0100` (256 decimal)
 - **End**: `0x08FF` (2303 decimal)
 
@@ -80,7 +81,9 @@ uint8_t readCustomMem(uint16_t offset) {
 This is **hardcore** - you modify how the compiler places everything.
 
 ### Step 1: Extract default linker script
+
 ```bash
+# avr-gcc -mmcu=atmega328p -Wl,--verbose
 cp /opt/homebrew/Cellar/avr-binutils/2.45.1/avr/lib/ldscripts/avr5.xn atmega328p.ld
 ```
 
@@ -102,19 +105,20 @@ SECTIONS
     . = . + 256;  /* Reserve 256 bytes */
     __reserved_end = .;
   } > data
-  
+
   /* Normal .data section starts after */
   .data __reserved_end :
   {
     *(.data)
     *(.data*)
   } > data
-  
+
   /* ... rest of sections ... */
 }
 ```
 
 ### Step 3: Access in C
+
 ```c
 extern uint8_t __reserved_start;
 extern uint8_t __reserved_end;
@@ -123,6 +127,7 @@ uint8_t* myReservedArea = &__reserved_start;
 ```
 
 ### Step 4: Compile with custom script
+
 ```bash
 avr-gcc -mmcu=atmega328p -T atmega328p.ld -o program.elf program.c
 ```
@@ -151,6 +156,7 @@ st X+, r24                     ; Store and increment
 ```
 
 ### Mixed C and ASM
+
 ```c
 void writeDirectASM(uint16_t addr, uint8_t value) {
     asm volatile (
@@ -241,12 +247,12 @@ Writing to Flash from the running program (self-programming):
 void flash_write_page(uint16_t page_addr, uint8_t* data) {
     boot_page_erase(page_addr);
     boot_spm_busy_wait();
-    
+
     for (uint16_t i = 0; i < FLASH_PAGE_SIZE; i += 2) {
         uint16_t word = data[i] | (data[i+1] << 8);
         boot_page_fill(page_addr + i, word);
     }
-    
+
     boot_page_write(page_addr);
     boot_spm_busy_wait();
     boot_rww_enable();
@@ -286,12 +292,12 @@ uint8_t readBuffer(uint8_t index) {
 
 int main() {
     initMemory();
-    
+
     writeBuffer(0, 0xDE);
     writeBuffer(1, 0xAD);
     writeBuffer(2, 0xBE);
     writeBuffer(3, 0xEF);
-    
+
     while(1) {
         // Your code
     }

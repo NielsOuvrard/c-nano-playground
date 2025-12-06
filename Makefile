@@ -12,7 +12,8 @@ CC = avr-gcc
 OBJCOPY = avr-objcopy
 AVRDUDE = avrdude
 CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -O0
-LDFLAGS = -T minimum.ld -Tdata=0x800500 -DBUFFER_SECTION_ATTRIBUTE
+INCFLAGS = -I ./include
+LDFLAGS = -T ./linkers/buffer_no_heap.ld -Tdata=0x800500 -DBUFFER_SECTION_ATTRIBUTE
 
 # Project files
 SRC = src/*.c
@@ -21,7 +22,7 @@ TARGET = hello
 all: $(TARGET).hex
 
 $(TARGET).elf: $(SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $(TARGET).elf $(SRC)
+	$(CC) $(CFLAGS) $(INCFLAGS) $(LDFLAGS) -o $(TARGET).elf $(SRC)
 
 $(TARGET).hex: $(TARGET).elf
 	$(OBJCOPY) -O ihex $(TARGET).elf $(TARGET).hex

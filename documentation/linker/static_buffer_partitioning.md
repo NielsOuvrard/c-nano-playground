@@ -16,18 +16,18 @@ This document describes the static buffer partitioning system implemented in `mi
 
 ## Memory Layout
 
-### ATmega328P SRAM: 2048 bytes (0x800060 - 0x8008FF)
+### ATmega328P SRAM: 2048 bytes (0x800100 - 0x8008FF)
 
 The 2KB SRAM is partitioned into the following regions:
 
 ```
-┌─────────────────────────────────────────┐ 0x800060
+┌─────────────────────────────────────────┐ 0x800100
 │  .buffer_128 (128 bytes)                │
-├─────────────────────────────────────────┤ 0x8000E0
+├─────────────────────────────────────────┤ 0x800180
 │  .buffer_256 (256 bytes)                │
-├─────────────────────────────────────────┤ 0x8001E0
+├─────────────────────────────────────────┤ 0x800280
 │  .buffer_640 (640 bytes)                │
-├─────────────────────────────────────────┤ 0x800460
+├─────────────────────────────────────────┤ 0x800500
 │  .data (initialized variables)          │
 │  .bss (uninitialized variables)         │
 │  .noinit (no-init variables)            │
@@ -44,13 +44,13 @@ Three fixed-size buffer sections are defined at the start of SRAM:
 
 | Buffer Section       | Size          | Memory Range        | Purpose                         |
 | -------------------- | ------------- | ------------------- | ------------------------------- |
-| `.buffer_128`        | 128 bytes     | 0x800060 - 0x8000DF | Small temporary operations      |
-| `.buffer_256`        | 256 bytes     | 0x8000E0 - 0x8001DF | Medium data processing          |
-| `.buffer_640`        | 640 bytes     | 0x8001E0 - 0x80045F | Large buffers (UART, SPI, etc.) |
-| `.data/.bss/.noinit` | Variable size | 0x800460 - 0x800??? | Global/static variables         |
+| `.buffer_128`        | 128 bytes     | 0x800100 - 0x80017F | Small temporary operations      |
+| `.buffer_256`        | 256 bytes     | 0x800180 - 0x80027F | Medium data processing          |
+| `.buffer_640`        | 640 bytes     | 0x800280 - 0x8004FF | Large buffers (UART, SPI, etc.) |
+| `.data/.bss/.noinit` | Variable size | 0x800500 - 0x800??? | Global/static variables         |
 | `stack`              | Variable size | 0x800??? - 0x8008FF | Function call stack             |
 
-**Data sections** (.data, .bss, .noinit) follow immediately after at 0x800460.
+**Data sections** (.data, .bss, .noinit) follow immediately after at 0x800500.
 
 ### Stack Region
 
@@ -69,12 +69,12 @@ MEMORY
   eeprom      (rw!x) : ORIGIN = 0x810000, LENGTH = 1K
 
   /* Static buffer partitions - strict memory boundaries (buffers first) */
-  buffer_128  (rw!x) : ORIGIN = 0x800060, LENGTH = 128
-  buffer_256  (rw!x) : ORIGIN = 0x8000E0, LENGTH = 256
-  buffer_640  (rw!x) : ORIGIN = 0x8001E0, LENGTH = 640
+  buffer_128  (rw!x) : ORIGIN = 0x800100, LENGTH = 128
+  buffer_256  (rw!x) : ORIGIN = 0x800180, LENGTH = 256
+  buffer_640  (rw!x) : ORIGIN = 0x800280, LENGTH = 640
 
   /* Data section follows buffers */
-  data        (rw!x) : ORIGIN = 0x800460, LENGTH = 0x4A0
+  data        (rw!x) : ORIGIN = 0x800500, LENGTH = 0x4A0
 }
 ```
 
@@ -223,16 +223,16 @@ Stack Space = 0x8008FF - (data_section_end)
             = Depends on size of .data, .bss, and .noinit sections
 ```
 
-Buffers are now placed first (0x800060 - 0x80045F), followed by data sections.
+Buffers are now placed first (0x800100 - 0x8004FF), followed by data sections.
 
 ### 4. Adjust Buffer Sizes as Needed
 
 If your application needs different buffer sizes, modify the `MEMORY` section in `minimum.ld`:
 
 ```ld
-buffer_128  (rw!x) : ORIGIN = 0x800060, LENGTH = 192   /* Increased */
-buffer_256  (rw!x) : ORIGIN = 0x800120, LENGTH = 256   /* Same */
-buffer_640  (rw!x) : ORIGIN = 0x800220, LENGTH = 512   /* Decreased */
+buffer_128  (rw!x) : ORIGIN = 0x800100, LENGTH = 192   /* Increased */
+buffer_256  (rw!x) : ORIGIN = 0x8001C0, LENGTH = 256   /* Same */
+buffer_640  (rw!x) : ORIGIN = 0x8002C0, LENGTH = 512   /* Decreased */
 ```
 
 **Important**: Ensure origins don't overlap and adjust data section origin accordingly.
@@ -241,13 +241,13 @@ buffer_640  (rw!x) : ORIGIN = 0x800220, LENGTH = 512   /* Decreased */
 
 ```
 FLASH (32KB)                    SRAM (2KB)
-┌────────────────┐              ┌────────────────────────┐ 0x800060
+┌────────────────┐              ┌────────────────────────┐ 0x800100
 │ .text          │              │ .buffer_128 (128B)     │
-│ .rodata        │              ├────────────────────────┤ 0x8000E0
+│ .rodata        │              ├────────────────────────┤ 0x800180
 │ .init*         │              │ .buffer_256 (256B)     │
-│ .fini*         │              ├────────────────────────┤ 0x8001E0
+│ .fini*         │              ├────────────────────────┤ 0x800280
 │                │              │ .buffer_640 (640B)     │
-│                │              ├────────────────────────┤ 0x800460
+│                │              ├────────────────────────┤ 0x800500
 │                │              │ .data (initialized)    │
 │                │              │ .bss (zero-init)       │
 │                │              │ .noinit (no-init)      │
@@ -308,10 +308,10 @@ uint8_t buf[256] __attribute__((section(".buffer_256")));
 
 ### Dynamic Origin Calculation
 
-With buffers placed first in SRAM, the data section origin is fixed at 0x800460 (after all buffers). This provides:
+With buffers placed first in SRAM, the data section origin is fixed at 0x800500 (after all buffers). This provides:
 
-- **Predictable buffer addresses**: Always start at 0x800060
-- **Fixed data section start**: Always at 0x800460
+- **Predictable buffer addresses**: Always start at 0x800100
+- **Fixed data section start**: Always at 0x800500
 - **No dependency on data section size** for buffer placement
 
 ### Multiple Buffer Pools
@@ -319,11 +319,11 @@ With buffers placed first in SRAM, the data section origin is fixed at 0x800460 
 For more granular control, create additional buffer sections:
 
 ```ld
-buffer_uart   (rw!x) : ORIGIN = 0x800060, LENGTH = 256
-buffer_spi    (rw!x) : ORIGIN = 0x800160, LENGTH = 256
-buffer_i2c    (rw!x) : ORIGIN = 0x800260, LENGTH = 256
-buffer_temp   (rw!x) : ORIGIN = 0x800360, LENGTH = 256
-data          (rw!x) : ORIGIN = 0x800460, LENGTH = 0x4A0
+buffer_uart   (rw!x) : ORIGIN = 0x800100, LENGTH = 256
+buffer_spi    (rw!x) : ORIGIN = 0x800200, LENGTH = 256
+buffer_i2c    (rw!x) : ORIGIN = 0x800300, LENGTH = 256
+buffer_temp   (rw!x) : ORIGIN = 0x800400, LENGTH = 256
+data          (rw!x) : ORIGIN = 0x800500, LENGTH = 0x4A0
 ```
 
 ## Summary
@@ -333,7 +333,7 @@ The static buffer partitioning system provides:
 ✅ **Predictable memory usage** - No heap fragmentation  
 ✅ **Compile-time verification** - Linker catches overflows  
 ✅ **Three fixed-size pools** - 128B, 256B, 640B (total: 1024 bytes)  
-✅ **Buffers-first layout** - Fixed addresses starting at 0x800060  
+✅ **Buffers-first layout** - Fixed addresses starting at 0x800100  
 ✅ **Stack protection** - Clear boundaries prevent collisions  
 ✅ **Embedded-friendly** - No dynamic allocation overhead
 

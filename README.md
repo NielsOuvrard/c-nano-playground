@@ -10,6 +10,59 @@ The primary goal was to enforce deterministic memory usage by forbidding the hea
 - **Manual Memory Control:** Instead of letting the linker place variables arbitrarily, I defined custom sections (`.buffer_128`, `.buffer_256`, `.buffer_640`) to map data to exact physical addresses.
 - **Bare Metal:** No Arduino core libraries. Direct register manipulation for UART and hardware setup.
 
+## Memory Layout
+
+### ATmega328P SRAM: 2048 bytes (0x800100 - 0x8008FF)
+
+The 2KB SRAM is partitioned into the following regions:
+
+```
+FLASH (32KB)                    SRAM (2KB)
+┌────────────────┐              ┌────────────────────────┐ 0x800100
+│ .text          │              │ .buffer_128 (128B)     │
+│ .rodata        │              ├────────────────────────┤ 0x800180
+│ .init*         │              │ .buffer_256 (256B)     │
+│ .fini*         │              ├────────────────────────┤ 0x800280
+│                │              │ .buffer_640 (640B)     │
+│                │              ├────────────────────────┤ 0x800500
+│                │              │ .data (initialized)    │
+│                │              │ .bss (zero-init)       │
+│                │              │ .noinit (no-init)      │
+│                │              ├────────────────────────┤
+│                │              │        ↕               │
+│                │              │   Free Space/Stack     │
+│                │              │        ↕               │
+└────────────────┘              │ Stack (grows downward) │
+                                └────────────────────────┘ 0x8008FF
+
+EEPROM (1KB)
+┌────────────────┐
+│ .eeprom        │
+└────────────────┘
+```
+
+### Buffer Partitioning Strategy
+
+Three fixed-size buffer sections are defined at the start of SRAM:
+
+| Buffer Section       | Size          | Memory Range        | Purpose                         |
+| -------------------- | ------------- | ------------------- | ------------------------------- |
+| `.buffer_128`        | 128 bytes     | 0x800100 - 0x80017F | Small temporary operations      |
+| `.buffer_256`        | 256 bytes     | 0x800180 - 0x80027F | Medium data processing          |
+| `.buffer_640`        | 640 bytes     | 0x800280 - 0x8004FF | Large buffers (UART, SPI, etc.) |
+| `.data/.bss/.noinit` | Variable size | 0x800500 - 0x800??? | Global/static variables         |
+| `stack`              | Variable size | 0x800??? - 0x8008FF | Function call stack             |
+
+**Data sections** (.data, .bss, .noinit) follow immediately after at 0x800500.
+
+### Stack Region
+
+- **Stack Pointer**: Initialized to `0x8008FF` (top of SRAM)
+- **Stack Growth**: Downward (decreasing addresses)
+- **Available Stack Space**: Depends on buffer + data section usage
+
+## Memory Layout Visualization
+
 ## 🛠 Technical Deep Dive
 
 ### 1. Custom Linker Script (`minimum.ld`)
